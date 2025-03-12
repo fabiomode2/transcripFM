@@ -1,4 +1,5 @@
-import { StyleSheet, Button } from "react-native";
+import { ColorValue, StyleSheet, useColorScheme } from "react-native";
+import { tintColorLight, tintColorDark } from "@/constants/Colors";
 
 import EditScreenInfo from "@/components/EditScreenInfo";
 import { Text, View } from "@/components/Themed";
@@ -12,17 +13,20 @@ import { CalendarEvent } from "@/components/Calendar_Event";
 import { CalendarEventProps } from "@/components/types";
 
 export default function index() {
+  const MAINCOLOR: ColorValue =
+    useColorScheme() == "light" ? tintColorDark : tintColorLight;
+
   return (
     <View style={styles.scroll_container}>
       <View style={styles.hcontainer}>
-        <Link href="/grabar">
-          <AntDesign name="plus" size={24} />
-          <Text style={styles.text_medium}> Subir audio </Text>
+        <Link href="/archivo">
+          <AntDesign name="folder1" size={24} color={MAINCOLOR} />
+          <Text style={styles.text_medium}> Ver archivo </Text>
         </Link>
 
-        <Link href="/archivo">
-          <AntDesign name="folder1" size={24} />
-          <Text style={styles.text_medium}> Ver archivo </Text>
+        <Link href="/grabar">
+          <AntDesign name="plus" size={24} color={MAINCOLOR} />
+          <Text style={styles.text_medium}> Subir audio </Text>
         </Link>
       </View>
 
@@ -37,7 +41,7 @@ export default function index() {
         style={styles.scroll_container}
       >
         <View style={styles.topdown_container}>
-          <AntDesign name="calendar" size={32} />
+          <AntDesign name="calendar" size={32} color={MAINCOLOR} />
           <Text style={styles.text_medium}>Próximos eventos</Text>
         </View>
         <View style={styles.vspace} />
