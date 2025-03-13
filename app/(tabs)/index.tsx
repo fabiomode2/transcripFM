@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "expo-router";
 import {
   StyleSheet,
   ScrollView,
@@ -8,111 +9,159 @@ import {
   ColorValue,
   useColorScheme,
 } from "react-native";
-import { auth, db } from "../../firebaseConfig";
-import { collection, addDoc, onSnapshot, DocumentData } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+import { collection, addDoc, onSnapshot, doc } from "firebase/firestore";
 import { tintColorLight, tintColorDark } from "@/constants/Colors";
 import { Text, View } from "@/components/Themed";
-import { Link } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { CalendarEvent } from "@/components/Calendar_Event";
 
-// 🔹 Definir el tipo de mensaje para TypeScript
-interface Mensaje {
+interface Materia {
   id: string;
-  texto: string;
+  nombre: string;
+}
+
+interface Dia {
+  id: string;
+  fecha: string;
 }
 
 export default function Index() {
   const MAINCOLOR: ColorValue =
     useColorScheme() == "light" ? tintColorDark : tintColorLight;
 
-  const [mensaje, setMensaje] = useState<string>(""); // Estado para el input
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]); // Estado para los mensajes de Firestore
+  const [materia, setMateria] = useState<string>(""); // Nombre de la materia
+  const [materias, setMaterias] = useState<Materia[]>([]); // Lista de materias
+  const [materiaSeleccionada, setMateriaSeleccionada] = useState<string | null>(
+    null
+  ); // Materia seleccionada
+  const [dias, setDias] = useState<Dia[]>([]); // Lista de días de la materia seleccionada
+  const [fechaDia, setFechaDia] = useState<string>(""); // Fecha del día nuevo
 
-  // 🔹 Obtener mensajes en tiempo real
+  // 🔹 Obtener lista de materias en Firestore
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "mensajes"), (snapshot) => {
-      const mensajesArray: Mensaje[] = snapshot.docs.map((doc) => {
-        const data = doc.data() as Omit<Mensaje, "id">; // 👈 Excluir 'id'
-        return {
-          id: doc.id, // 👈 Asignamos 'id' manualmente
-          texto: data.texto, // 👈 Extraemos solo 'texto' de Firestore
-        };
-      });
-  
-      setMensajes(mensajesArray);
+    const unsubscribe = onSnapshot(collection(db, "materias"), (snapshot) => {
+      const materiasArray: Materia[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        nombre: doc.data().nombre,
+      }));
+      setMaterias(materiasArray);
     });
-  
-    return () => unsubscribe(); // Limpiar la suscripción al desmontar
+
+    return () => unsubscribe();
   }, []);
 
-  // 🔹 Función para agregar un mensaje a Firestore
-  const agregarMensaje = async () => {
-    if (mensaje.trim() === "") return; // Evitar mensajes vacíos
+  // 🔹 Obtener lista de días de la materia seleccionada
+  useEffect(() => {
+    if (!materiaSeleccionada) return;
+
+    const unsubscribe = onSnapshot(
+      collection(db, "materias", materiaSeleccionada, "dias"),
+      (snapshot) => {
+        const diasArray: Dia[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          fecha: doc.data().fecha,
+        }));
+        setDias(diasArray);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [materiaSeleccionada]);
+
+  // 🔹 Función para agregar una nueva materia
+  const agregarMateria = async () => {
+    if (materia.trim() === "") return;
 
     try {
-      const docRef = await addDoc(collection(db, "mensajes"), {
-        texto: mensaje,
-        timestamp: new Date(),
+      const docRef = await addDoc(collection(db, "materias"), {
+        nombre: materia,
       });
-
-      console.log("Mensaje agregado con ID:", docRef.id);
-      setMensaje(""); // Limpiar el input después de enviar
+      console.log("Materia agregada con ID:", docRef.id);
+      setMateria(""); // Limpiar el input
     } catch (error) {
-      console.error("Error al agregar mensaje:", error);
+      console.error("Error al agregar materia:", error);
+    }
+  };
+
+  // 🔹 Función para agregar un nuevo día a la materia seleccionada
+  const agregarDia = async () => {
+    if (fechaDia.trim() === "" || !materiaSeleccionada) return;
+
+    try {
+      await addDoc(collection(db, "materias", materiaSeleccionada, "dias"), {
+        fecha: fechaDia,
+      });
+      console.log("Día agregado en materia:", materiaSeleccionada);
+      setFechaDia(""); // Limpiar el input
+    } catch (error) {
+      console.error("Error al agregar día:", error);
     }
   };
 
   return (
     <View style={styles.scroll_container}>
-      {/* 🔹 Botones superiores */}
-      <View style={styles.hcontainer}>
-        <Link href="/archivo">
-          <AntDesign name="folder1" size={24} color={MAINCOLOR} />
-          <Text style={styles.text_medium}>Ver archivo</Text>
-        </Link>
-
-        <Link href="/grabar">
-          <AntDesign name="plus" size={24} color={MAINCOLOR} />
-          <Text style={styles.text_medium}>Subir audio</Text>
-        </Link>
-      </View>
-
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-
-      {/* 🔹 Lista de Eventos */}
-      <ScrollView contentContainerStyle={styles.topdown_container}>
-        <View style={styles.topdown_container}>
-          <AntDesign name="calendar" size={32} color={MAINCOLOR} />
-          <Text style={styles.text_medium}>Próximos eventos</Text>
-        </View>
-        <View style={styles.vspace} />
-        <CalendarEvent text="Tarea 1 Cálculo" date={new Date()} />
-        <CalendarEvent text="Tarea 2 Álgebra" date={new Date()} />
-      </ScrollView>
-
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-
-      {/* 🔹 Enviar mensaje a Firestore */}
-      <DefaultView style={styles.mensajesContainer}>
-        <Text style={styles.text_medium}>Escribe un mensaje:</Text>
+      {/* 🔹 Agregar Materia */}
+      <DefaultView style={styles.inputContainer}>
         <TextInput
-          placeholder="Escribe aquí..."
-          value={mensaje}
-          onChangeText={setMensaje}
+          placeholder="Nombre de la materia"
+          value={materia}
+          onChangeText={setMateria}
           style={styles.input}
         />
-        <Button title="Enviar" onPress={agregarMensaje} />
+        <Button title="Agregar Materia" onPress={agregarMateria} />
       </DefaultView>
 
-      {/* 🔹 Mostrar mensajes desde Firestore */}
+      <View style={styles.container}>
+        <Text>Home screen</Text>
+        <Link href="/modal" style={styles.link}>
+          Open modal
+        </Link>
+      </View>
+      <View style={styles.separator} />
+
+      {/* 🔹 Lista de Materias */}
       <ScrollView>
-        {mensajes.map((msg) => (
-          <View key={msg.id} style={styles.mensajeItem}>
-            <Text>{msg.texto}</Text>
-          </View>
+        <Text style={styles.text_medium}>Materias Disponibles:</Text>
+        {materias.map((mat) => (
+          <Button
+            key={mat.id}
+            title={mat.nombre}
+            onPress={() => setMateriaSeleccionada(mat.id)}
+          />
         ))}
       </ScrollView>
+
+      <View style={styles.separator} />
+
+      {/* 🔹 Mostrar los Días de la Materia Seleccionada */}
+      {materiaSeleccionada && (
+        <>
+          <Text style={styles.text_medium}>
+            Días de {materias.find((m) => m.id === materiaSeleccionada)?.nombre}
+            :
+          </Text>
+
+          {/* 🔹 Agregar Día */}
+          <DefaultView style={styles.inputContainer}>
+            <TextInput
+              placeholder="Fecha del día (Ej: 2024-03-12)"
+              value={fechaDia}
+              onChangeText={setFechaDia}
+              style={styles.input}
+            />
+            <Button title="Agregar Día" onPress={agregarDia} />
+          </DefaultView>
+
+          {/* 🔹 Lista de Días */}
+          <ScrollView>
+            {dias.map((dia) => (
+              <View key={dia.id} style={styles.diaItem}>
+                <Text>{dia.fecha}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 }
@@ -120,45 +169,39 @@ export default function Index() {
 const styles = StyleSheet.create({
   scroll_container: {
     flex: 1,
-  },
-  hcontainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 20,
     padding: 20,
   },
-  topdown_container: {
-    alignItems: "center",
-    justifyContent: "center",
+  inputContainer: {
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 10,
   },
   separator: {
-    marginVertical: 30,
+    marginVertical: 20,
     height: 1,
-    width: "80%",
+    width: "100%",
+    backgroundColor: "#ddd",
   },
   text_medium: {
     fontSize: 18,
     textAlign: "center",
     fontFamily: "SpaceMono",
   },
-  vspace: {
-    height: 20,
-  },
-  mensajesContainer: {
-    padding: 20,
-    alignItems: "center",
-  },
-  input: {
-    borderWidth: 1,
-    padding: 10,
-    width: "80%",
-    marginVertical: 10,
-  },
-  mensajeItem: {
+  diaItem: {
     padding: 10,
     borderBottomWidth: 1,
     borderColor: "#ccc",
+  },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  link: {
+    paddingTop: 20,
+    fontSize: 20,
   },
 });
