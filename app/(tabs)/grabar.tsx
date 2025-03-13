@@ -1,33 +1,13 @@
 import { Button, StyleSheet } from "react-native";
-import EditScreenInfo from "@/components/EditScreenInfo";
 import { Text, View } from "@/components/Themed";
 import * as DP from "expo-document-picker";
 import { useState } from "react";
 import {} from "@/components/API";
-import * as FileSystem from "expo-file-system";
 
-import { Platform } from "react-native";
+import { uploadAudio } from "../utils/funcionesFB";
 
 export default function grabar() {
   const [t, st] = useState<string>("");
-
-  const uploadAudio = async (blob: Blob, fileName: string) => {
-    const formData = new FormData();
-    formData.append("file", blob, fileName);
-
-    try {
-      const response = await fetch("http://127.0.0.1:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log("Fi le uploaded successfully:", data);
-      st(data.response);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    }
-  };
 
   const pickAudio = async () => {
     try {
