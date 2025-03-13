@@ -101,19 +101,11 @@ export default function Index() {
   return (
     <View style={styles.scroll_container}>
       {/* 🔹 Agregar Materia */}
-      <DefaultView style={styles.inputContainer}>
-        <TextInput
-          placeholder="Nombre de la materia"
-          value={materia}
-          onChangeText={setMateria}
-          style={styles.input}
-        />
-        <Button title="Agregar Materia" onPress={agregarMateria} />
-      </DefaultView>
+      
 
       <View style={styles.container}>
-        <Text>Home screen</Text>
-        <Link href="/modal" style={styles.link}>
+        
+        <Link href="/AgregarMateria" style={styles.link}>
           Open modal
         </Link>
       </View>
