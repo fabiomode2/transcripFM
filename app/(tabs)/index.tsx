@@ -101,15 +101,12 @@ export default function Index() {
   return (
     <View style={styles.scroll_container}>
       {/* 🔹 Agregar Materia */}
-      
 
       <View style={styles.container}>
-        
-        <Link href="/AgregarMateria" style={styles.link}>
-          Open modal
+        <Link href="/AgregarMateria" style={styles.linkAgregarMateria}>
+          Agregar materia
         </Link>
       </View>
-      <View style={styles.separator} />
 
       {/* 🔹 Lista de Materias */}
       <ScrollView>
@@ -191,9 +188,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 50,
   },
-  link: {
-    paddingTop: 20,
+  linkAgregarMateria: {
+    padding: 20,
     fontSize: 20,
+    backgroundColor: "black",
+    color: "white",
   },
 });
