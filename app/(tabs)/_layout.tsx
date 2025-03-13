@@ -67,7 +67,7 @@ export default function TabLayout() {
             <AntDesign name="home" size={24} color={color} />
           ),
           headerRight: () => (
-            <Link href="/modal" asChild>
+            <Link href="/AgregarMateria" asChild>
               <Pressable>
                 {({ pressed }) => (
                   <FontAwesome
