@@ -1,5 +1,6 @@
 import { db } from "../../firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
+import { python_server } from "./constanst";
 
 /**
  * Función para agregar una materia a Firestore
@@ -32,3 +33,24 @@ export const agregarMateria = async (
     throw error;
   }
 };
+
+
+
+export const uploadAudio = async (blob: Blob, fileName: string) => {
+    const formData = new FormData();
+    formData.append("file", blob, fileName);
+
+    try {
+      const response = await fetch(python_server + "/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log("Fi le uploaded successfully:", data);
+      return data.response
+    } catch (error) {
+      console.error(error)
+      return "ERROR en la transcripcion"
+    }
+  };
